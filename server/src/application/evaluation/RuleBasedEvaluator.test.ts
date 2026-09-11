@@ -240,7 +240,7 @@ describe(
           createContext();
 
         context.submission
-          .classes[0]
+          .classes[0]!
           .responsibility =
           "Handles parking.";
 

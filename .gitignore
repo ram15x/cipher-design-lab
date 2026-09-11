@@ -1,2 +1,25 @@
+# Dependencies
+node_modules/
+**/node_modules/
 
-server/.env
+# Build output
+dist/
+**/dist/
+
+# Environment secrets
+.env
+**/.env
+
+# Keep safe examples
+!.env.example
+!**/.env.example
+
+# Tool/test cache
+.vite/
+**/.vite/
+coverage/
+**/coverage/
+
+# Logs
+*.log
+npm-debug.log*

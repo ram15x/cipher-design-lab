@@ -208,7 +208,7 @@ describe(
 
           classes: [
             validSubmission
-              .classes[0],
+              .classes[0]!,
           ],
         });
 
@@ -453,16 +453,13 @@ describe(
           attempt.toObject();
 
         copy.submission
-          .classes[0]
-          .name =
-          "ModifiedOutsideDomain";
-
+          .classes[0]!
         const freshCopy =
           attempt.toObject();
 
         expect(freshCopy
             .submission
-            .classes[0]
+            .classes[0]!
             .name
         ).toBe(
           "ParkingLot"
