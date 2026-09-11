@@ -1,152 +1,124 @@
-
-This positioning is important because CipherSchools explicitly says a simple monolith is acceptable and wants emphasis on classes, responsibilities, interfaces, behavior and extensibility rather than unnecessary HLD complexity. :contentReference[oaicite:1]{index=1}
-
----
-
-# 3. `AI_USAGE.md`
-
-This one matters because they specifically ask for **3–5 meaningful AI-assisted decisions, what AI suggested, and what we accepted/rejected and why**. :contentReference[oaicite:2]{index=2}
-
-Paste:
-
-```markdown
 # AI Usage
 
-AI tools were used during this assignment as an engineering assistant for brainstorming, reviewing architecture decisions, debugging, and accelerating implementation.
+## How AI Was Used in Cipher DesignLab
 
-The suggestions were not treated as authoritative. Decisions were accepted, changed, or rejected based on the assignment constraints and the behaviour required from the product.
+AI tools were used throughout the development of Cipher DesignLab as an engineering assistant.
 
-Below are five meaningful examples.
+They helped with:
+
+- brainstorming possible approaches;
+- comparing architecture choices;
+- reviewing Low-Level Design decisions;
+- debugging implementation problems;
+- identifying edge cases;
+- improving prompts and evaluation logic;
+- accelerating repetitive development work.
+
+However, AI suggestions were **not treated as automatically correct**.
+
+Every important suggestion was reviewed against:
+
+1. the requirements of the assignment;
+2. the actual needs of the learner;
+3. simplicity and maintainability;
+4. reliability and testability;
+5. the limited scope of the prototype.
+
+In several cases, an AI suggestion was accepted. In others, it was modified or rejected completely.
+
+The following five examples show some of the most meaningful AI-assisted engineering decisions made during the project.
 
 ---
 
-## 1. Evaluation Architecture
+# 1. Separating Objective Checks from AI Judgement
 
-### AI suggestion
+## The problem
 
-Separate deterministic checks from LLM-based design judgement.
+Cipher DesignLab needs to evaluate a learner's Low-Level Design.
 
-The proposed architecture introduced an `Evaluator` abstraction with multiple implementations.
+At first, it might seem easiest to send the entire design to an AI model and ask:
 
-### Decision
+> "Is this a good design?"
 
-Accepted.
+The problem is that not every part of a design should be judged in the same way.
 
-The final architecture contains:
+Some mistakes are objective.
+
+For example:
+
+- a relationship refers to a class that does not exist;
+- the same class is declared multiple times;
+- important structural information is missing.
+
+These are facts that normal program logic can verify.
+
+Other questions require judgement.
+
+For example:
+
+- Does each class have a clear responsibility?
+- Is the design too tightly coupled?
+- Is an abstraction actually useful?
+- Would the design handle future changes well?
+- Are the learner's trade-offs reasonable?
+
+These questions do not always have one mathematically correct answer.
+
+## AI suggestion
+
+AI suggested separating these two kinds of evaluation instead of forcing one evaluator to handle everything.
+
+The proposed architecture introduced a common `Evaluator` abstraction with different evaluator implementations.
+
+## Our decision
+
+**Accepted.**
+
+The final system contains:
 
 - `RuleBasedEvaluator`
 - `OpenRouterLlmEvaluator`
 - `CompositeEvaluator`
 
-### Why
+## What this means in simple terms
 
-Some checks are objectively verifiable while others require design judgement.
+Think of the system as having **two reviewers**.
+
+The first reviewer is strict and mechanical.
+
+It checks things that can be proven directly from the submission.
+
+The second reviewer behaves more like an experienced software-design mentor.
+
+It evaluates areas where context and reasoning matter.
+
+The `CompositeEvaluator` combines both perspectives into one evaluation result.
+
+## Why we accepted it
+
+This separation makes the system more trustworthy.
+
+We do not need an AI model to determine whether a referenced class actually exists. Normal code can answer that more reliably.
+
+At the same time, normal `if/else` rules are not enough to decide whether a learner has chosen a sensible abstraction or explained a trade-off well.
+
+Using both approaches allows each tool to do the job it is best suited for.
+
+It also improves maintainability and testing because the rule-based and AI-based evaluation logic can evolve independently.
+
+---
+
+# 2. Rejecting a Single AI-Generated Score
+
+## The problem
+
+One early approach was very simple:
+
+1. send the learner's entire design to an LLM;
+2. ask it to evaluate the design;
+3. ask it to return a score from 0 to 100.
 
 For example:
 
-Deterministic:
-
-- duplicate classes
-- invalid relationship references
-- missing structural evidence
-- attempt state transitions
-
-Judgement-heavy:
-
-- quality of responsibilities
-- coupling/cohesion
-- abstraction choices
-- trade-offs
-- extensibility
-
-Keeping those concerns separate makes evaluation easier to test and allows another evaluation strategy to be introduced later.
-
----
-
-## 2. AI Scoring
-
-### AI suggestion
-
-An early idea was to ask an LLM to evaluate the complete design and directly produce a percentage score.
-
-### Decision
-
-Rejected.
-
-### Why
-
-A single unconstrained AI score would be difficult to explain and inconsistent across valid design approaches.
-
-Instead, the final implementation uses eight fixed rubric dimensions.
-
-The model scores each dimension from 0–5.
-
-The backend calculates the final percentage deterministically.
-
-This means the LLM does not directly decide an arbitrary 0–100 score.
-
----
-
-## 3. Evidence-Grounded Feedback
-
-### AI suggestion
-
-Create an evidence catalogue from learner submission fields and require AI feedback to reference those identifiers.
-
-### Decision
-
-Accepted and strengthened.
-
-### Why
-
-LLMs may generate plausible feedback about components that were never actually included in the learner's design.
-
-The application therefore:
-
-1. creates valid evidence identifiers from the submission;
-2. supplies them to the model;
-3. requires evidence references in structured output;
-4. validates returned identifiers after the response.
-
-An AI response containing invented evidence is rejected rather than silently stored.
-
----
-
-## 4. Evaluation Infrastructure
-
-### AI suggestion
-
-Possible approaches discussed included a message broker / worker architecture for asynchronous evaluation.
-
-### Decision
-
-A production queue was rejected for the prototype.
-
-An `EvaluationDispatcher` abstraction was retained, but the implementation uses an in-process asynchronous dispatcher.
-
-### Why
-
-The assignment is primarily a Low-Level Design exercise.
-
-Introducing Kafka, worker services and distributed queue infrastructure would increase operational complexity without improving the core learner workflow enough for the two-day MVP.
-
-The abstraction still provides a clear replacement point if the product later requires durable asynchronous processing.
-
----
-
-## 5. Evaluation Failure Recovery
-
-### AI suggestion
-
-When an AI evaluation fails, create another learner attempt and re-submit the solution.
-
-### Decision
-
-Rejected.
-
-### Final design
-
-A failed evaluation can return:
-
 ```text
-FAILED → SUBMITTED → EVALUATING
+Overall design score: 82/100
