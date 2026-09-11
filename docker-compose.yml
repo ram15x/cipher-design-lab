@@ -1,0 +1,12 @@
+services:
+  mongo:
+    image: mongo:7.0
+    container_name: cipher-designlab-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - cipher_designlab_mongo:/data/db
+
+volumes:
+  cipher_designlab_mongo:
